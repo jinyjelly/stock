@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fff8f1">
+  <meta name="description" content="여러 보유 종목을 저장하고 선택하는 귀여운 주식 물타기 계산기. 종목별 예상 평단가를 자동 계산해 보세요.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="평단토끼">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>평단토끼 | 귀여운 주식 물타기 계산기</title>
+  <style>
+    :root{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; color:#34313a; background:#fff8f1; font-synthesis:none}
+    *{box-sizing:border-box}
+    html{-webkit-text-size-adjust:100%}
+    body{margin:0;min-width:320px;background:linear-gradient(180deg,#fff7ef 0%,#fff9f4 44%,#fffdfb 100%);min-height:100dvh}
+    button,input{font:inherit}
+    button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+    button:focus-visible,input:focus-visible{outline:3px solid #e8b5fd;outline-offset:2px}
+    .app{max-width:480px;padding:19px 17px calc(32px + env(safe-area-inset-bottom));margin:auto}
+    .header{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 20px}
+    .brand{display:flex;align-items:center;gap:9px;font-weight:900;font-size:22px;letter-spacing:-1.2px}
+    .brand-logo{display:grid;place-items:center;width:38px;height:38px;border-radius:14px;background:#fff;border:1px solid #f2dce0;box-shadow:0 4px 12px #d1a99525}
+    .tag{color:#b17b65;font-size:11px;font-weight:800;border:1px solid #f4d9c7;background:#ffefe5;padding:7px 9px;border-radius:99px}
+    .hero{background:linear-gradient(145deg,#ffe8d8,#fff1e6 72%);border:1px solid #f5d7c6;border-radius:30px;padding:17px 18px 12px;position:relative;overflow:hidden;margin-bottom:14px}
+    .hero:before{content:"";position:absolute;width:170px;height:170px;border-radius:50%;background:#fff7f09c;right:-45px;top:-90px}
+    .hero-content{display:flex;align-items:center;justify-content:space-between;gap:8px;position:relative}
+    .hero-message{align-self:center;min-width:0}
+    .eyebrow{font-size:12px;letter-spacing:.3px;font-weight:800;color:#b57b65;margin:0 0 8px}
+    .headline{font-size:25px;line-height:1.32;letter-spacing:-1.4px;font-weight:900;margin:0}
+    .headline em{font-style:normal;color:#f1766e}
+    .hero-note{font-size:12px;line-height:1.65;color:#8e6b5e;margin:10px 0 0}
+    .mascot{width:136px;min-width:136px;height:151px;align-self:end;position:relative;filter:drop-shadow(0 7px 4px #cf95832a)}
+    .mascot svg{display:block;width:100%;height:100%}
+    .spark{position:absolute;color:#ef9b78;font-size:19px;top:10px;left:10px;animation:twinkle 2.4s ease-in-out infinite}
+    @keyframes twinkle{50%{transform:scale(.8) rotate(15deg);opacity:.5}}
+    .stock-pill{display:flex;align-items:center;gap:7px;position:relative;background:#ffffffb5;border-radius:12px;border:1px solid #ffefe4;padding:9px 12px;font-size:12px;font-weight:800;color:#a16c57}
+    /* Portfolio switcher */
+    .portfolio-card{background:#fff;border:1px solid #efe9e5;border-radius:25px;padding:18px 17px;margin:0 0 14px;box-shadow:0 7px 24px #8469490a}
+    .portfolio-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+    .portfolio-heading h2{font-size:16px;letter-spacing:-.6px;font-weight:900;margin:0}
+    .count-badge{padding:5px 9px;background:#fff1ed;color:#c87868;border-radius:99px;font-size:12px;font-weight:850}
+    .selector-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:end}
+    .selector-line .field{min-width:0}
+    .stock-select{appearance:none;-webkit-appearance:none;width:100%;height:51px;border:1.5px solid #f0e9e6;background:#fdfaf8;border-radius:14px;color:#34313a;padding:0 37px 0 13px;font-size:15px;font-weight:850;outline:0}
+    .select-shell{position:relative}
+    .select-shell:after{content:'⌄';pointer-events:none;position:absolute;right:13px;top:10px;color:#ac8c7c;font-size:22px}
+    .stock-select:focus-visible{outline:3px solid #e8b5fd;outline-offset:2px}
+    .add-stock-button{height:51px;border:1px solid #f18776;border-radius:14px;background:#f48776;color:#fff;padding:0 14px;white-space:nowrap;font-weight:850;font-size:14px}
+    .manage-line{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px}
+    .manage-help{font-size:11px;color:#9b9398;line-height:1.55}
+    .delete-button{border:0;background:transparent;color:#b08a83;font-size:12px;font-weight:800;padding:8px 2px;white-space:nowrap}
+    .new-stock-panel{background:#fff8f4;border:1px solid #f7e5db;padding:14px;border-radius:16px;margin-top:12px}
+    .new-stock-panel[hidden]{display:none}
+    .new-stock-row{display:flex;gap:8px}
+    .new-stock-row input{min-width:0;flex:1;height:44px;border:1px solid #f0e1dc;border-radius:12px;background:#fff;padding:0 11px;font-size:16px;font-weight:700}
+    .mini-button{border:0;background:#f48776;color:white;border-radius:12px;padding:0 12px;font-weight:800;white-space:nowrap}
+    .mini-cancel{background:white;color:#9b8280;border:1px solid #eee1dc}
+    .new-stock-note{font-size:11px;color:#a78c87;margin:8px 0 0;line-height:1.5}
+    .card{background:#fff;border:1px solid #efe9e5;border-radius:25px;box-shadow:0 7px 24px #8469490a;padding:19px 17px;margin:0 0 14px}
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px}
+    .section-title h2{font-size:16px;letter-spacing:-.6px;margin:0;font-weight:900;display:flex;align-items:center;gap:7px}
+    .section-step{font-size:11px;background:#fff1ed;color:#d98470;border-radius:8px;padding:5px 8px;font-weight:850}
+    label{font-size:12px;font-weight:800;color:#88808a;display:block;margin:0 0 8px}
+    .field{min-width:0}
+    .field+.field-full{margin-top:12px}
+    .grid-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+    .input-shell{height:51px;display:flex;align-items:center;border:1.5px solid #f0e9e6;background:#fdfaf8;border-radius:14px;overflow:hidden;transition:.15s}
+    .input-shell:focus-within{border-color:#f6aa93;background:#fff;box-shadow:0 0 0 3px #ffd6c866}
+    .input-shell input{width:100%;min-width:0;padding:0 11px;background:transparent;border:0;outline:0!important;color:#34313a;font-size:16px;font-weight:800;letter-spacing:-.3px}
+    .input-shell input[type=number]{appearance:textfield;-moz-appearance:textfield}
+    .input-shell input::-webkit-inner-spin-button,.input-shell input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+    .unit{font-size:12px;color:#9a9093;font-weight:800;white-space:nowrap;padding-right:11px}
+    .field-full{margin-bottom:13px}
+    .qty-line{display:flex;align-items:center;gap:6px;flex:1}
+    .qty-line .input-shell{flex:1}
+    .qty-button{height:51px;width:39px;flex:none;border:0;border-radius:14px;background:#fff0e9;color:#d57961;font-size:22px;font-weight:650}
+    .hint{margin:12px 0 0;font-size:12px;color:#9b9398;line-height:1.6}
+    .result-card{background:linear-gradient(180deg,#fff 0%,#fffdfb 100%);border:1.5px solid #f4d6ca;border-radius:27px;padding:19px 16px;margin-top:17px;box-shadow:0 10px 35px #caa08e12}
+    .result-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .result-top h2{font-size:17px;margin:0;letter-spacing:-.5px}
+    .real-time{display:flex;align-items:center;gap:6px;font-size:11px;color:#a77e6d;background:#fff3eb;padding:6px 9px;border-radius:99px;font-weight:800}
+    .dot{width:7px;height:7px;background:#63bf94;border-radius:50%}
+    .comparison{display:grid;grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr);gap:4px;align-items:center}
+    .number-box{text-align:center;min-width:0;border-radius:18px;padding:13px 3px;background:#faf8f7}
+    .number-box.after{background:#fff0e8}
+    .caption{font-size:11px;color:#867f85;font-weight:800;display:block;margin-bottom:9px}
+    .main-number{font-size:clamp(21px,5.8vw,28px);font-weight:950;letter-spacing:-1.3px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+    .percent{font-size:13px;font-weight:850;display:block;margin-top:7px;color:#378dc3}
+    .percent.positive{color:#e45e66}
+    .arrow{text-align:center;color:#d6aaa0;font-size:23px;font-weight:800}
+    .difference{display:flex;justify-content:center;gap:6px;align-items:center;background:#fff7f1;border:1px solid #fae1d5;color:#af745f;border-radius:12px;margin-top:14px;padding:11px 7px;font-size:13px;font-weight:850;text-align:center}
+    .details{margin-top:14px;border-top:1px dashed #f0e2dc;padding:7px 2px 0}
+    .detail{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 0;font-size:13px}
+    .detail span{color:#867f84}
+    .detail strong{font-size:14px;font-variant-numeric:tabular-nums;text-align:right}
+    .error{background:#fff0ed;color:#b54b47;border-radius:12px;padding:11px;font-size:12px;margin-top:12px;display:none;line-height:1.5}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0 9px}
+    .action{min-height:49px;border-radius:15px;font-size:14px;font-weight:850;border:1px solid #f0dbd1;background:#fff;color:#9f7a70}
+    .action.primary{border-color:#f18776;color:#fff;background:#f48776;box-shadow:0 5px 14px #f4877626}
+    .footer{text-align:center;color:#ab9ba2;font-size:11px;line-height:1.75;margin:14px auto 0;max-width:350px}
+    .footer small{display:block;font-size:11px}
+    .toast{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,14px);background:#474047;color:#fff;padding:12px 19px;border-radius:99px;font-size:13px;font-weight:750;opacity:0;pointer-events:none;transition:.22s;white-space:nowrap;z-index:20;box-shadow:0 8px 30px #4442}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+    @media(max-width:360px){.app{padding-inline:12px}.card{padding-inline:13px}.hero{padding-inline:13px}.mascot{width:110px;min-width:110px;height:130px}.headline{font-size:22px}.main-number{font-size:20px}.qty-button{width:32px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="brand"><span class="brand-logo" aria-hidden="true">🐰</span>평단토끼</div>
+    <span class="tag">물타기 계산기</span>
+  </header>
+
+  <section class="hero" aria-label="귀여운 계산기 소개">
+    <div class="hero-content">
+      <div class="hero-message">
+        <p class="eyebrow">평단가 계산 도우미</p>
+        <h1 class="headline">물타기 전에<br><em>미리 계산해요!</em></h1>
+        <p class="hero-note">귀여운 토끼와 함께<br>평균 매수가를 확인해요.</p>
+      </div>
+      <div class="mascot" aria-hidden="true">
+        <span class="spark">✦</span>
+        <svg viewBox="0 0 160 175" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="80" cy="165" rx="57" ry="8" fill="#e6b8ab" opacity=".34"/>
+          <path d="M52 68C42 43 37 8 50 5c17-5 25 36 25 57M90 62c-2-24 7-61 23-57 15 4 5 48-4 66" fill="#fff" stroke="#71515a" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M54 15c-5 0-2 27 5 39M106 16c7-3 1 28-4 40" fill="none" stroke="#ffc2c0" stroke-width="9" stroke-linecap="round"/>
+          <path d="M34 105c-8-24 8-53 45-55 35-2 55 24 50 54l-4 40c-3 16-90 18-94-1z" fill="#fff" stroke="#71515a" stroke-width="4" stroke-linejoin="round"/>
+          <ellipse cx="52" cy="106" rx="10" ry="7" fill="#ffd0d0"/>
+          <ellipse cx="108" cy="106" rx="10" ry="7" fill="#ffd0d0"/>
+          <ellipse cx="65" cy="95" rx="4" ry="6" fill="#493f46"/>
+          <ellipse cx="94" cy="95" rx="4" ry="6" fill="#493f46"/>
+          <path d="M75 107q5 5 10 0M80 108v4" fill="none" stroke="#71515a" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M26 125c-14-8-16 12-5 17l16 6M130 125c14-8 16 12 5 17l-16 6" fill="#fff" stroke="#71515a" stroke-width="4"/>
+          <rect x="46" y="122" width="68" height="38" rx="14" fill="#ffd6ad" stroke="#71515a" stroke-width="4"/>
+          <path d="M48 135h64" stroke="#ffe9cd" stroke-width="5"/>
+          <path d="M75 132l10 0m-5-5v10" stroke="#f08c83" stroke-width="4" stroke-linecap="round"/>
+          <path d="M55 164l-5 4M106 164l5 4" stroke="#71515a" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+    <div class="stock-pill"><span aria-hidden="true">🥕</span><span id="stockPill">삼성전자</span><span style="margin-left:auto;font-weight:650">선택한 종목 계산 중</span></div>
+  </section>
+
+  <main>
+    <section class="portfolio-card" aria-labelledby="portfolio-title">
+      <div class="portfolio-heading"><h2 id="portfolio-title">📚 내 보유 종목</h2><span class="count-badge" id="stockCount">1종목</span></div>
+      <div class="selector-line">
+        <div class="field"><label for="stockSelect">계산할 종목 선택</label><div class="select-shell"><select id="stockSelect" class="stock-select" aria-label="계산할 보유 종목 선택"><option>삼성전자</option></select></div></div>
+        <button type="button" id="addStock" class="add-stock-button" aria-expanded="false" aria-controls="newStockPanel">＋ 종목 추가</button>
+      </div>
+      <div id="newStockPanel" class="new-stock-panel" hidden>
+        <label for="newStockName">새 종목 이름</label>
+        <div class="new-stock-row"><input id="newStockName" type="text" maxlength="30" placeholder="예: SK하이닉스" autocomplete="off"><button type="button" id="confirmAdd" class="mini-button">등록</button><button type="button" id="cancelAdd" class="mini-button mini-cancel">취소</button></div>
+        <p class="new-stock-note">새로 등록한 종목의 평단가와 수량은 아래에서 입력하세요.</p>
+      </div>
+      <div class="manage-line"><span class="manage-help">🐰 종목마다 입력값이 따로 자동 저장돼요.</span><button type="button" id="deleteStock" class="delete-button">종목 삭제</button></div>
+    </section>
+    <section class="card" aria-labelledby="current-title">
+      <div class="section-title"><h2 id="current-title">🧺 현재 보유 주식</h2><span class="section-step">STEP 01</span></div>
+      <div class="field field-full"><label for="stockName">선택한 종목 이름 (여기서 수정 가능)</label><div class="input-shell"><input id="stockName" maxlength="30" value="삼성전자" placeholder="예: 삼성전자" autocomplete="off"></div></div>
+      <div class="grid-2">
+        <div class="field"><label for="avgPrice">현재 평단가</label><div class="input-shell"><input id="avgPrice" type="number" inputmode="decimal" min="0" step="any" value="299025"><span class="unit">원</span></div></div>
+        <div class="field"><label for="ownedQty">보유 수량</label><div class="input-shell"><input id="ownedQty" type="number" inputmode="numeric" min="1" step="1" value="20"><span class="unit">주</span></div></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="additional-title">
+      <div class="section-title"><h2 id="additional-title">🛒 추가로 매수하기</h2><span class="section-step">STEP 02</span></div>
+      <div class="field field-full"><label for="buyPrice">추가 매수 가격</label><div class="input-shell"><input id="buyPrice" type="number" inputmode="decimal" min="0" step="any" value="251000"><span class="unit">원</span></div></div>
+      <div class="field"><label for="buyQty">추가 매수 수량</label><div class="qty-line"><button type="button" class="qty-button" id="minus" aria-label="매수 수량 1주 줄이기">−</button><div class="input-shell"><input id="buyQty" type="number" inputmode="numeric" min="0" step="1" value="40"><span class="unit">주</span></div><button type="button" class="qty-button" id="plus" aria-label="매수 수량 1주 늘리기">+</button></div></div>
+      <p class="hint">🌷 가격과 수량을 바꾸면 아래 결과가 바로 달라져요.</p>
+    </section>
+
+    <section class="result-card" aria-live="polite" aria-labelledby="result-title">
+      <div class="result-top"><h2 id="result-title">✨ 계산 결과</h2><span class="real-time"><i class="dot" aria-hidden="true"></i>실시간 계산</span></div>
+      <div class="comparison">
+        <div class="number-box"><span class="caption">현재 평단가</span><div class="main-number" id="currentResult">299,025</div><span class="percent" id="currentRate">-16.06%</span></div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="number-box after"><span class="caption">예상 평단가</span><div class="main-number" id="newResult">267,008</div><span class="percent" id="newRate">-5.99%</span></div>
+      </div>
+      <div class="difference" id="difference">🐰 평단가가 32,017원 내려가요!</div>
+      <div class="details">
+        <div class="detail"><span>추가 매수 금액</span><strong id="buyCost">10,040,000원</strong></div>
+        <div class="detail"><span>추가 매수 후 총 수량</span><strong id="totalQty">60주</strong></div>
+        <div class="detail"><span>총 매수 원금</span><strong id="totalCost">16,020,500원</strong></div>
+      </div>
+      <div class="error" id="error" role="alert"></div>
+    </section>
+    <div class="actions"><button class="action primary" type="button" id="copy">📋 결과 복사</button><button class="action" type="button" id="reset">↺ 이 종목만 초기화</button></div>
+  </main>
+  <footer class="footer">종목별 입력값은 이 기기 브라우저에 자동 저장돼요.<small>수익률은 ‘추가 매수 가격’을 현재 주가로 가정한 값이며,<br>수수료와 세금은 포함하지 않아요.</small></footer>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const inputIds=['stockName','avgPrice','ownedQty','buyPrice','buyQty'];
+  const stockFields=['avgPrice','ownedQty','buyPrice','buyQty'];
+  const defaults={stockName:'삼성전자',avgPrice:'299025',ownedQty:'20',buyPrice:'251000',buyQty:'40'};
+  const newDefaults={stockName:'',avgPrice:'',ownedQty:'',buyPrice:'',buyQty:'0'};
+  const key='pyeongdan-tokki-v2-stocks';
+  const oldKey='pyeongdan-tokki-v1';
+  const fmt=n=>Math.round(n).toLocaleString('ko-KR');
+  const won=n=>fmt(n)+'원';
+  const percent=n=>(n>0?'+':'')+n.toFixed(2)+'%';
+  const uid=()=>String(Date.now())+'-'+Math.random().toString(36).slice(2,9);
+  let model={activeId:'',stocks:[]};
+  let valid=false,result=null,toastTimer;
+  function setText(id,value){$(id).textContent=value;}
+  function showToast(message){const t=$('toast');t.textContent=message;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);}
+  function displayName(stock){return stock.stockName.trim()||'이름 없는 종목';}
+  function selected(){return model.stocks.find(s=>s.id===model.activeId)||null;}
+  function normalizeFields(data,fallback){
+    const stock={id:uid()};
+    inputIds.forEach(id=>{const v=data&&data[id];stock[id]=typeof v==='string'&&v.length<=80?v:typeof v==='number'&&Number.isFinite(v)?String(v):fallback[id];});
+    return stock;
+  }
+  function save(){
+    try{localStorage.setItem(key,JSON.stringify(model));}catch(e){/* storage disabled */}
+  }
+  function restore(){
+    try {
+      const stored=JSON.parse(localStorage.getItem(key));
+      if(stored&&Array.isArray(stored.stocks)&&stored.stocks.length&&stored.stocks.length<=200){
+        const ids=new Set();
+        const stocks=[];
+        for(const item of stored.stocks){
+          if(!item||typeof item!=='object'||typeof item.id!=='string'||ids.has(item.id)||item.id.length>100)continue;
+          const parsed=normalizeFields(item,newDefaults);parsed.id=item.id;ids.add(item.id);stocks.push(parsed);
+        }
+        if(stocks.length){model={activeId:stocks.some(s=>s.id===stored.activeId)?stored.activeId:stocks[0].id,stocks};return;}
+      }
+    }catch(e){}
+    // 기존 버전 이용자라면 마지막에 입력한 종목과 수량을 그대로 가져옵니다.
+    let initial=defaults;
+    try{
+      const old=JSON.parse(localStorage.getItem(oldKey));
+      if(old&&typeof old==='object')initial=old;
+    }catch(e){}
+    const first=normalizeFields(initial,defaults);
+    model={activeId:first.id,stocks:[first]};save();
+  }
+  function updateSelector(){
+    const select=$('stockSelect');
+    select.replaceChildren();
+    model.stocks.forEach(s=>{const opt=document.createElement('option');opt.value=s.id;opt.textContent=displayName(s);select.appendChild(opt);});
+    select.value=model.activeId;
+    setText('stockCount',model.stocks.length+'종목');
+  }
+  function renderActive(){
+    const s=selected();if(!s)return;
+    inputIds.forEach(id=>$(id).value=s[id]);
+    updateSelector();calculate();
+  }
+  function saveInputs(){
+    const s=selected();if(!s)return;
+    inputIds.forEach(id=>s[id]=$(id).value);
+    updateSelector();calculate();save();
+  }
+  function setRate(id,n){const el=$(id);el.textContent=percent(n);el.classList.toggle('positive',n>0);}
+  function clearResult(message){
+    ['currentResult','newResult','currentRate','newRate','buyCost','totalQty','totalCost'].forEach(id=>setText(id,'—'));
+    setText('difference','숫자를 입력하면 결과가 나와요 🐰');
+    $('error').textContent=message;$('error').style.display='block';valid=false;result=null;
+  }
+  function calculate(){
+    const stock=$('stockName').value.trim()||'내 종목';
+    setText('stockPill',stock);
+    const a=Number($('avgPrice').value),q=Number($('ownedQty').value),p=Number($('buyPrice').value),n=Number($('buyQty').value);
+    const allFilled=stockFields.every(id=>$(id).value.trim()!=='');
+    valid=allFilled&&[a,q,p,n].every(Number.isFinite)&&a>0&&q>0&&p>0&&n>=0&&Number.isSafeInteger(q)&&Number.isSafeInteger(n);
+    if(!valid){clearResult('평단가와 매수 가격은 0보다 커야 하고, 보유 수량은 1주 이상, 추가 수량은 0주 이상인 정수여야 해요.');return;}
+    const buyCost=p*n,totalQty=q+n,totalCost=a*q+buyCost,newAvg=totalCost/totalQty;
+    if(![buyCost,totalQty,totalCost,newAvg].every(Number.isFinite)){
+      clearResult('숫자가 너무 커서 계산할 수 없어요. 입력값을 줄여주세요.');return;
+    }
+    $('error').style.display='none';
+    setText('currentResult',fmt(a));setText('newResult',fmt(newAvg));
+    setRate('currentRate',(p/a-1)*100);setRate('newRate',(p/newAvg-1)*100);
+    setText('buyCost',won(buyCost));setText('totalQty',fmt(totalQty)+'주');setText('totalCost',won(totalCost));
+    const diff=a-newAvg;
+    setText('difference',Math.abs(diff)<.005?'🐰 평단가가 그대로예요!':diff>0?`🐰 평단가가 ${won(diff)} 내려가요!`:`🐰 평단가가 ${won(-diff)} 올라가요!`);
+    result={stock,a,q,p,n,newAvg,buyCost,totalQty,totalCost};
+  }
+  function toggleAdd(open){
+    $('newStockPanel').hidden=!open;$('addStock').setAttribute('aria-expanded',String(open));
+    if(open){$('newStockName').value='';$('newStockName').focus();}
+  }
+  function addStock(){
+    const name=$('newStockName').value.trim();
+    if(!name){showToast('새 종목 이름을 입력해 주세요.');$('newStockName').focus();return;}
+    if(model.stocks.some(s=>displayName(s).toLocaleLowerCase()===name.toLocaleLowerCase())){showToast('이미 등록된 종목 이름이에요.');return;}
+    const stock=normalizeFields({...newDefaults,stockName:name},newDefaults);
+    model.stocks.push(stock);model.activeId=stock.id;save();renderActive();toggleAdd(false);
+    $('avgPrice').focus();showToast(name+' 종목을 추가했어요!');
+  }
+  inputIds.forEach(id=>$(id).addEventListener('input',saveInputs));
+  $('stockSelect').addEventListener('change',()=>{model.activeId=$('stockSelect').value;save();renderActive();toggleAdd(false);});
+  $('addStock').addEventListener('click',()=>toggleAdd($('newStockPanel').hidden));
+  $('confirmAdd').addEventListener('click',addStock);
+  $('cancelAdd').addEventListener('click',()=>toggleAdd(false));
+  $('newStockName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addStock();}if(e.key==='Escape')toggleAdd(false);});
+  $('deleteStock').addEventListener('click',()=>{
+    const s=selected();if(!s)return;
+    if(!window.confirm('「'+displayName(s)+'」 종목과 저장된 값을 삭제할까요?'))return;
+    model.stocks=model.stocks.filter(x=>x.id!==s.id);
+    if(!model.stocks.length)model.stocks.push(normalizeFields(newDefaults,newDefaults));
+    model.activeId=model.stocks[0].id;save();renderActive();toggleAdd(false);showToast('종목을 삭제했어요.');
+  });
+  $('minus').addEventListener('click',()=>{const n=Number($('buyQty').value);$('buyQty').value=String(Math.max(0,Number.isFinite(n)?Math.floor(n)-1:0));saveInputs();});
+  $('plus').addEventListener('click',()=>{const n=Number($('buyQty').value);$('buyQty').value=String(Math.max(0,Number.isFinite(n)?Math.floor(n)+1:1));saveInputs();});
+  $('reset').addEventListener('click',()=>{
+    const s=selected();if(!s)return;
+    if(!window.confirm('「'+displayName(s)+'」 종목의 계산 숫자를 예시값으로 초기화할까요?'))return;
+    stockFields.forEach(id=>s[id]=defaults[id]);save();renderActive();showToast('이 종목의 숫자만 초기화했어요.');
+  });
+  $('copy').addEventListener('click',async()=>{
+    if(!result){showToast('먼저 숫자를 확인해 주세요.');return;}
+    const r=result,txt=`[${r.stock} 물타기 계산]\n현재: ${won(r.a)} × ${fmt(r.q)}주\n추가 매수: ${won(r.p)} × ${fmt(r.n)}주\n추가 매수금액: ${won(r.buyCost)}\n예상 평단가: ${won(r.newAvg)}\n총 보유: ${fmt(r.totalQty)}주\n총 매수원금: ${won(r.totalCost)}\n※ 수수료/세금 제외`;
+    try{if(!navigator.clipboard)throw Error('clipboard unavailable');await navigator.clipboard.writeText(txt);showToast('계산 결과를 복사했어요!');}
+    catch(e){const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();const worked=document.execCommand('copy');ta.remove();showToast(worked?'계산 결과를 복사했어요!':'복사가 안 돼요. 브라우저에서 다시 시도해 주세요.');}
+  });
+  restore();renderActive();
+  if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+  }
+})();
+</script>
+</body>
+</html>
